@@ -11,7 +11,7 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}`);
-  await mongoose.connect(process.env.MONGO_URI);
+  await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
   await registerAllCustomCommands();
   console.log("Slash commands registered.");
 });
@@ -25,13 +25,60 @@ async function hasModPermission(guildMember, command) {
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  // Check for custom commands
-  const cmd = await CustomCommand.findOne({ name: interaction.commandName });
-  if (cmd) {
-    if (cmd.action === "Send Message" && cmd.message) {
-      await interaction.reply(cmd.message);
-    } else {
-      await interaction.reply({ content: `Custom command: ${cmd.action} (not yet implemented)`, ephemeral: true });
+  // Try to find a custom command (either global or per guild)
+  const dbCmd = await CustomCommand.findOne({
+    $or: [
+      { name: interaction.commandName },
+      { guildId: interaction.guildId, name: interaction.commandName }
+    ]
+  });
+
+  if (dbCmd) {
+    // Handle custom command actions
+    try {
+      switch (dbCmd.action) {
+        case "Send Message":
+        case "send_message":
+          await interaction.reply(dbCmd.message || dbCmd.content || "No content set.");
+          break;
+        case "send_dm":
+          await interaction.user.send(dbCmd.content || "No content set.");
+          await interaction.reply({ content: "DM sent!", ephemeral: true });
+          break;
+        case "send_channel":
+          if (!dbCmd.channel) return interaction.reply({ content: "Channel not set.", ephemeral: true });
+          const channel = await client.channels.fetch(dbCmd.channel);
+          await channel.send(dbCmd.content || "No content set.");
+          await interaction.reply({ content: "Message sent to channel!", ephemeral: true });
+          break;
+        case "set_roles":
+        case "give_roles":
+        case "add_roles":
+          {
+            const user = interaction.options.getUser("user");
+            const member = await interaction.guild.members.fetch(user.id);
+            const roles = (dbCmd.roles || []).filter(Boolean);
+            if (!roles.length) return interaction.reply({ content: "No roles set.", ephemeral: true });
+            await member.roles.add(roles);
+            await interaction.reply({ content: `Roles updated for ${user.tag}.`, ephemeral: true });
+          }
+          break;
+        case "remove_roles":
+          {
+            const user = interaction.options.getUser("user");
+            const member = await interaction.guild.members.fetch(user.id);
+            const roles = (dbCmd.roles || []).filter(Boolean);
+            if (!roles.length) return interaction.reply({ content: "No roles set.", ephemeral: true });
+            await member.roles.remove(roles);
+            await interaction.reply({ content: `Roles removed from ${user.tag}.`, ephemeral: true });
+          }
+          break;
+        default:
+          await interaction.reply({ content: "Action not implemented.", ephemeral: true });
+      }
+    } catch (err) {
+      console.error(err);
+      await interaction.reply({ content: "Error executing command.", ephemeral: true });
     }
     return;
   }
@@ -46,13 +93,13 @@ client.on('interactionCreate', async interaction => {
     await interaction.reply({
       embeds: [
         new EmbedBuilder()
-          .setTitle("LiquidLibrary")
-          .setDescription("A multipurpose Discord bot with custom commands and moderation.\n[Dashboard](https://your-dashboard-link.com)")
+          .setTitle("Dewey Bot")
+          .setDescription("A multipurpose Discord bot with custom commands and moderation.\n[Dashboard](https://deweybot.com)")
           .addFields(
-            { name: "Owner", value: `<@932469856199127111> (${owner.tag})` }
+            { name: "Team", value: `<@932469856199127111> (${owner.tag})` }
           )
           .setColor(0xff8800)
-          .setFooter({ text: "Made by overpriced.mp3" })
+          .setFooter({ text: "Made with love and code by overpriced.mp3" })
       ]
     });
   } else if (["kick", "ban", "mute", "warn"].includes(interaction.commandName)) {
@@ -88,63 +135,6 @@ client.on('interactionCreate', async interaction => {
       await interaction.reply(`⚠️ Warned ${targetUser.tag}. Reason: ${reason}`);
       try { await targetUser.send(`You were warned in ${interaction.guild.name}: ${reason}`); } catch {}
     }
-  }
-});
-
-import CustomCommand from "./models/CustomCommand.js";
-import { client } from "./discordClient.js";
-
-client.on("interactionCreate", async interaction => {
-  if (!interaction.isChatInputCommand()) return;
-
-  const { guildId, commandName } = interaction;
-  const dbCmd = await CustomCommand.findOne({ guildId, name: commandName });
-
-  if (!dbCmd) return; // Let your existing handler process normal bot commands
-
-  try {
-    switch (dbCmd.action) {
-      case "send_message":
-        await interaction.reply(dbCmd.content || "No content set.");
-        break;
-      case "send_dm":
-        await interaction.user.send(dbCmd.content || "No content set.");
-        await interaction.reply({ content: "DM sent!", ephemeral: true });
-        break;
-      case "send_channel":
-        if (!dbCmd.channel) return interaction.reply({ content: "Channel not set.", ephemeral: true });
-        const channel = await client.channels.fetch(dbCmd.channel);
-        await channel.send(dbCmd.content || "No content set.");
-        await interaction.reply({ content: "Message sent to channel!", ephemeral: true });
-        break;
-      case "set_roles":
-      case "give_roles":
-      case "add_roles":
-        {
-          const user = interaction.options.getUser("user");
-          const member = await interaction.guild.members.fetch(user.id);
-          const roles = (dbCmd.roles || []).filter(Boolean);
-          if (!roles.length) return interaction.reply({ content: "No roles set.", ephemeral: true });
-          await member.roles.add(roles);
-          await interaction.reply({ content: `Roles updated for ${user.tag}.`, ephemeral: true });
-        }
-        break;
-      case "remove_roles":
-        {
-          const user = interaction.options.getUser("user");
-          const member = await interaction.guild.members.fetch(user.id);
-          const roles = (dbCmd.roles || []).filter(Boolean);
-          if (!roles.length) return interaction.reply({ content: "No roles set.", ephemeral: true });
-          await member.roles.remove(roles);
-          await interaction.reply({ content: `Roles removed from ${user.tag}.`, ephemeral: true });
-        }
-        break;
-      default:
-        await interaction.reply({ content: "Action not implemented.", ephemeral: true });
-    }
-  } catch (err) {
-    console.error(err);
-    await interaction.reply({ content: "Error executing command.", ephemeral: true });
   }
 });
 

@@ -1,7 +1,7 @@
 {
-  "name": "liquidlibrary-backend",
-  "version": "1.0.0",
-  "description": "Backend and Discord bot for LiquidLibrary with custom slash commands",
+  "name": "deweybot-backend",
+  "version": "1.2.1",
+  "description": "Backend for Dewey a Discord bot.",
   "main": "app.js",
   "type": "module",
   "scripts": {

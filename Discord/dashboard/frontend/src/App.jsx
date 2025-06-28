@@ -168,7 +168,7 @@ export default function App() {
         }}
       >
         <h2 style={{ fontSize: "1.5em", marginBottom: "2.2em", letterSpacing: 1, color: "#ff8800" }}>
-          Server Dashboard
+          Dewey Bot
         </h2>
         <nav>
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -207,7 +207,7 @@ export default function App() {
         </nav>
         <div style={{ flex: 1 }} />
         <footer style={{ color: "#888", fontSize: "0.94em", textAlign: "center", marginTop: "2em" }}>
-          &copy; {new Date().getFullYear()} YourBotName
+          &copy; {new Date().getFullYear()} Dewey
         </footer>
       </aside>
       {/* Main Content */}
