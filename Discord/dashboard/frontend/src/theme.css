@@ -1,0 +1,70 @@
+:root {
+  --bg-dark: #181c25;
+  --bg-light: #23283a;
+  --accent: #ff6600;
+  --text: #f0f0f0;
+  --text-dim: #b0b7c3;
+  --border: #23283a;
+}
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text);
+}
+h1, h2 {
+  color: var(--accent);
+}
+input, button {
+  border-radius: 6px;
+  border: none;
+  padding: 0.5em 1em;
+  margin-right: 0.5em;
+  background: var(--bg-light);
+  color: var(--text);
+  font-size: 1em;
+  outline: none;
+}
+input:focus {
+  border: 1px solid var(--accent);
+}
+button {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button:hover {
+  background: #d35400;
+}
+.section {
+  background: var(--bg-light);
+  padding: 1.5em;
+  border-radius: 12px;
+  margin-bottom: 2em;
+  box-shadow: 0 2px 8px #0002;
+}
+ul {
+  list-style: none;
+  padding: 0;
+}
+li {
+  padding: 0.6em 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+}
+li:last-child {
+  border-bottom: none;
+}
+label {
+  color: var(--text-dim);
+  margin-bottom: 0.3em;
+  display: block;
+  font-size: 0.98em;
+}
+@media (max-width: 600px) {
+  .section {
+    padding: 1em;
+  }
+}

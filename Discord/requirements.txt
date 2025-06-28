@@ -1,0 +1,4 @@
+websockets
+aiohttp
+discord.py>=2.3.2
+nest_asyncio

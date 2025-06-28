@@ -1,0 +1,24 @@
+{
+  "name": "liquidlibrary-backend",
+  "version": "1.0.0",
+  "description": "Backend and Discord bot for LiquidLibrary with custom slash commands",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js",
+    "bot": "node bot.js",
+    "dev": "nodemon app.js",
+    "dev:bot": "nodemon bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.3.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "author": "overpriced.mp3",
+  "license": "MIT"
+}
