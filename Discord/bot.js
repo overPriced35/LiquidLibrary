@@ -91,4 +91,61 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
+import CustomCommand from "./models/CustomCommand.js";
+import { client } from "./discordClient.js";
+
+client.on("interactionCreate", async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+
+  const { guildId, commandName } = interaction;
+  const dbCmd = await CustomCommand.findOne({ guildId, name: commandName });
+
+  if (!dbCmd) return; // Let your existing handler process normal bot commands
+
+  try {
+    switch (dbCmd.action) {
+      case "send_message":
+        await interaction.reply(dbCmd.content || "No content set.");
+        break;
+      case "send_dm":
+        await interaction.user.send(dbCmd.content || "No content set.");
+        await interaction.reply({ content: "DM sent!", ephemeral: true });
+        break;
+      case "send_channel":
+        if (!dbCmd.channel) return interaction.reply({ content: "Channel not set.", ephemeral: true });
+        const channel = await client.channels.fetch(dbCmd.channel);
+        await channel.send(dbCmd.content || "No content set.");
+        await interaction.reply({ content: "Message sent to channel!", ephemeral: true });
+        break;
+      case "set_roles":
+      case "give_roles":
+      case "add_roles":
+        {
+          const user = interaction.options.getUser("user");
+          const member = await interaction.guild.members.fetch(user.id);
+          const roles = (dbCmd.roles || []).filter(Boolean);
+          if (!roles.length) return interaction.reply({ content: "No roles set.", ephemeral: true });
+          await member.roles.add(roles);
+          await interaction.reply({ content: `Roles updated for ${user.tag}.`, ephemeral: true });
+        }
+        break;
+      case "remove_roles":
+        {
+          const user = interaction.options.getUser("user");
+          const member = await interaction.guild.members.fetch(user.id);
+          const roles = (dbCmd.roles || []).filter(Boolean);
+          if (!roles.length) return interaction.reply({ content: "No roles set.", ephemeral: true });
+          await member.roles.remove(roles);
+          await interaction.reply({ content: `Roles removed from ${user.tag}.`, ephemeral: true });
+        }
+        break;
+      default:
+        await interaction.reply({ content: "Action not implemented.", ephemeral: true });
+    }
+  } catch (err) {
+    console.error(err);
+    await interaction.reply({ content: "Error executing command.", ephemeral: true });
+  }
+});
+
 client.login(process.env.DISCORD_TOKEN);
