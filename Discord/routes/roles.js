@@ -1,12 +1,8 @@
 import express from 'express';
-import { Client, GatewayIntentBits } from 'discord.js';
+import { client } from "../discordClient.js";
 
 const router = express.Router();
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-client.login(process.env.DISCORD_TOKEN);
-
-// GET /api/roles/:guildId
 router.get('/:guildId', async (req, res) => {
   try {
     const guild = await client.guilds.fetch(req.params.guildId);
